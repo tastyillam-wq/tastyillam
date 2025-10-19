@@ -28,6 +28,7 @@
         }
 
         function OrderForm() {
+            const [isSubmitting, setIsSubmitting] = useState(false);
             const [formData, setFormData] = useState({
                 name: '',
                 phone: '',
@@ -36,30 +37,49 @@
                 deliveryType: 'delivery',
                 products: {
                     dosaBatter: 0,
-                    milletDosaBatter: 0,
-                    adaiDosaBatter: 0,
                     idliBatter: 0,
+                    adaiDosaBatter: 0,
+                    moongDalDosaBatter: 0,
+                    ragiMilletDosaBatter: 0,
+                    multiMilletDosaBatter: 0,
+                    pearlMilletDosaBatter: 0,
+                    jowarMilletDosaBatter: 0,
+                    uradDalVadaBatter: 0,
                     idliPodi: 0,
-                    chutney: 0
+                    corianderChutney: 0,
+                    peanutChutney: 0,
+                    coconutChutney: 0
                 },
                 comments: ''
             });
 
-            const products = [
-                { id: 'dosaBatter', name: 'Fresh Dosa Batter', price: 8 },
-                { id: 'milletDosaBatter', name: 'Millet Dosa Batter', price: 10 },
-                { id: 'adaiDosaBatter', name: 'Adai Dosa Batter', price: 9 },
-                { id: 'idliBatter', name: 'Idli Batter', price: 8 },
-                { id: 'idliPodi', name: 'Idli Podi', price: 6 },
-                { id: 'chutney', name: 'Chutney', price: 5 }
+            const batterProducts = [
+                { id: 'dosaBatter', name: 'Dosa Batter 32oz', price: 7 },
+                { id: 'idliBatter', name: 'Idli Batter 32oz', price: 7 },
+                { id: 'adaiDosaBatter', name: 'Adai Dosa Batter 32oz', price: 9 },
+                { id: 'moongDalDosaBatter', name: 'Moong Dal Dosa Batter/ Pesarattu 32oz', price: 9 },
+                { id: 'ragiMilletDosaBatter', name: 'Ragi Millet Dosa Batter 32oz', price: 10 },
+                { id: 'multiMilletDosaBatter', name: 'Multi Millet Dosa Batter 32oz', price: 10 },
+                { id: 'pearlMilletDosaBatter', name: 'Pearl Millet Dosa Batter 32oz', price: 10 },
+                { id: 'jowarMilletDosaBatter', name: 'Jowar Millet Dosa Batter 32oz', price: 10 },
+                { id: 'uradDalVadaBatter', name: 'Urad Dal Vada Batter 32oz', price: 10 }
             ];
+
+            const chutneyProducts = [
+                { id: 'idliPodi', name: 'Idli Podi 5oz', price: 5 },
+                { id: 'corianderChutney', name: 'Coriander Chutney 4oz', price: 3 },
+                { id: 'peanutChutney', name: 'Peanut Chutney 4oz', price: 3 },
+                { id: 'coconutChutney', name: 'Coconut Chutney 4oz', price: 3 }
+            ];
+
+            const allProducts = [...batterProducts, ...chutneyProducts];
 
             const handleProductChange = (productId, value) => {
                 setFormData(prev => ({
                     ...prev,
                     products: {
                         ...prev.products,
-                        [productId]: Math.max(0, parseInt(value) || 0)
+                        [productId]: parseInt(value)
                     }
                 }));
             };
@@ -72,12 +92,12 @@
             };
 
             const calculateTotal = () => {
-                return products.reduce((total, product) => {
+                return allProducts.reduce((total, product) => {
                     return total + (formData.products[product.id] * product.price);
                 }, 0);
             };
 
-            const handleSubmit = () => {
+            const handleSubmit = async () => {
                 if (!formData.name || !formData.phone) {
                     alert('Please fill in required fields: Name and Phone Number');
                     return;
@@ -91,58 +111,104 @@
                     return;
                 }
 
-                const orderSummary = {
-                    ...formData,
-                    total: calculateTotal(),
-                    orderedItems: products.filter(p => formData.products[p.id] > 0)
-                        .map(p => `${p.name} x ${formData.products[p.id]}`)
+                setIsSubmitting(true);
+
+                // Prepare order data
+                const orderData = {
+                    name: formData.name,
+                    phone: formData.phone,
+                    email: formData.email,
+                    address: formData.address,
+                    deliveryType: formData.deliveryType,
+                    comments: formData.comments,
+                    products: {}
                 };
-                
-                // In production, send this to your server/email
-                console.log('Order submitted:', orderSummary);
-                alert('Order submitted successfully!\n\nOrder Details:\n' + 
-                    orderSummary.orderedItems.join('\n') + 
-                    '\n\nTotal: $' + orderSummary.total.toFixed(2) +
-                    '\n\nWe will contact you shortly at ' + formData.phone);
-                
-                // Reset form
-                setFormData({
-                    name: '',
-                    phone: '',
-                    email: '',
-                    address: '',
-                    deliveryType: 'delivery',
-                    products: {
-                        dosaBatter: 0,
-                        milletDosaBatter: 0,
-                        adaiDosaBatter: 0,
-                        idliBatter: 0,
-                        idliPodi: 0,
-                        chutney: 0
-                    },
-                    comments: ''
+
+                // Add product details
+                allProducts.forEach(product => {
+                    const qty = formData.products[product.id];
+                    if (qty > 0) {
+                        orderData.products[product.id] = {
+                            name: product.name,
+                            quantity: qty,
+                            price: product.price,
+                            subtotal: qty * product.price
+                        };
+                    }
                 });
+
+                try {
+                    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyDc66lP3lL1YwLEmQwXP9VY4QpbUXbg7PciqfCztAlJikf2__reoMGFA83k_lZZhsusw/exec';
+
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(orderData)
+                    });
+
+                    // Show success message
+                    alert('✅ Your order has been confirmed!\n\n' +
+                        'Order Details:\n' +
+                        Object.values(orderData.products).map(p => `${p.name} x${p.quantity}`).join('\n') +
+                        '\n\nTotal: $' + calculateTotal().toFixed(2) +
+                        '\n\nYou will receive a WhatsApp confirmation shortly.\n' +
+                        'We will contact you at ' + formData.phone);
+
+                    // Reset form
+                    setFormData({
+                        name: '',
+                        phone: '',
+                        email: '',
+                        address: '',
+                        deliveryType: 'delivery',
+                        products: {
+                            dosaBatter: 0,
+                            idliBatter: 0,
+                            adaiDosaBatter: 0,
+                            moongDalDosaBatter: 0,
+                            ragiMilletDosaBatter: 0,
+                            multiMilletDosaBatter: 0,
+                            pearlMilletDosaBatter: 0,
+                            jowarMilletDosaBatter: 0,
+                            uradDalVadaBatter: 0,
+                            idliPodi: 0,
+                            corianderChutney: 0,
+                            peanutChutney: 0,
+                            coconutChutney: 0
+                        },
+                        comments: ''
+                    });
+
+                } catch (error) {
+                    console.error('Error submitting order:', error);
+                    alert('There was an error submitting your order. Please try again or contact us directly at 408 709 9905.');
+                } finally {
+                    setIsSubmitting(false);
+                }
             };
 
             const total = calculateTotal();
             const hasItems = Object.values(formData.products).some(qty => qty > 0);
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 py-8 px-4">
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 px-4">
                     <div className="max-w-3xl mx-auto">
                         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                            <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6">
+                            <div className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white p-6">
                                 <h1 className="text-3xl font-bold mb-2">Tasty Illam</h1>
-                                <p className="text-orange-100">Dosa Batter - Mountain House</p>
+                                <p className="text-blue-100">Dosa Batter - Mountain House</p>
                             </div>
 
-                            <div className="bg-orange-100 border-l-4 border-orange-500 p-4">
+                            <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
                                 <p className="text-sm text-gray-800 mb-2">
                                     <strong>Fresh Dosa Batter, Millet Dosa Batter, Adai Dosa Batter, Idli Batter, Idli Podi and Chutney</strong> now available in Mountain House!
                                 </p>
                                 <p className="text-sm text-gray-700 mb-2">Get it delivered to your doorstep for free or choose pickup.</p>
-                                <div className="flex items-start gap-2 text-sm text-gray-700 bg-white rounded p-3 mt-2">
-                                    <Clock className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                                <div className="flex items-start gap-2 text-sm text-gray-700 bg-white rounded p-3 mt-2 shadow-sm">
+                                    <Clock className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                                     <div>
                                         <p className="font-semibold mb-1">Order Timing & Delivery Note:</p>
                                         <p>Orders placed before 1:00 PM today → Delivered tomorrow morning between 10–11 AM</p>
@@ -150,7 +216,7 @@
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-gray-700 mt-3">
-                                    <Phone className="w-4 h-4 text-orange-500" />
+                                    <Phone className="w-4 h-4 text-blue-500" />
                                     <span>Got questions? WhatsApp us: <strong>408 709 9905</strong></span>
                                 </div>
                             </div>
@@ -159,26 +225,72 @@
                                 <div>
                                     <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                                         <ShoppingCart className="w-5 h-5" />
-                                        Select Products
+                                        Dosa Batter Types
                                     </h2>
                                     <div className="space-y-3">
-                                        {products.map(product => (
-                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition">
+                                        {batterProducts.map(product => (
+                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition">
                                                 <div className="flex-1">
-                                                    <label htmlFor={product.id} className="font-medium text-gray-800 cursor-pointer">
+                                                    <label htmlFor={product.id} className="font-medium text-gray-800 cursor-pointer block">
                                                         {product.name}
                                                     </label>
-                                                    <p className="text-sm text-gray-600">${product.price}.00</p>
+                                                    <p className="text-sm text-gray-600">${product.price}.00 each</p>
+                                                    {formData.products[product.id] > 0 && (
+                                                        <p className="text-sm font-semibold text-blue-600 mt-1">
+                                                            Subtotal: ${(product.price * formData.products[product.id]).toFixed(2)}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                <input
-                                                    type="number"
-                                                    id={product.id}
-                                                    min="0"
-                                                    value={formData.products[product.id]}
-                                                    onChange={(e) => handleProductChange(product.id, e.target.value)}
-                                                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                                    placeholder="0"
-                                                />
+                                                <div className="flex items-center gap-2">
+                                                    <label htmlFor={product.id} className="text-sm text-gray-600">Qty:</label>
+                                                    <select
+                                                        id={product.id}
+                                                        value={formData.products[product.id]}
+                                                        onChange={(e) => handleProductChange(product.id, e.target.value)}
+                                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                    >
+                                                        {[...Array(6)].map((_, i) => (
+                                                            <option key={i} value={i}>{i}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <ShoppingCart className="w-5 h-5" />
+                                        Chutney & Podi Choices
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {chutneyProducts.map(product => (
+                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition">
+                                                <div className="flex-1">
+                                                    <label htmlFor={product.id} className="font-medium text-gray-800 cursor-pointer block">
+                                                        {product.name}
+                                                    </label>
+                                                    <p className="text-sm text-gray-600">${product.price}.00 each</p>
+                                                    {formData.products[product.id] > 0 && (
+                                                        <p className="text-sm font-semibold text-blue-600 mt-1">
+                                                            Subtotal: ${(product.price * formData.products[product.id]).toFixed(2)}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <label htmlFor={product.id} className="text-sm text-gray-600">Qty:</label>
+                                                    <select
+                                                        id={product.id}
+                                                        value={formData.products[product.id]}
+                                                        onChange={(e) => handleProductChange(product.id, e.target.value)}
+                                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                    >
+                                                        {[...Array(6)].map((_, i) => (
+                                                            <option key={i} value={i}>{i}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -187,25 +299,25 @@
                                 <div>
                                     <h2 className="text-xl font-semibold text-gray-800 mb-3">Delivery Option</h2>
                                     <div className="space-y-2">
-                                        <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-orange-50">
+                                        <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50">
                                             <input
                                                 type="radio"
                                                 name="deliveryType"
                                                 value="delivery"
                                                 checked={formData.deliveryType === 'delivery'}
                                                 onChange={(e) => handleInputChange('deliveryType', e.target.value)}
-                                                className="w-4 h-4 text-orange-500"
+                                                className="w-4 h-4 text-blue-500"
                                             />
                                             <span className="ml-3 text-gray-800">Delivery (Free)</span>
                                         </label>
-                                        <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-orange-50">
+                                        <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50">
                                             <input
                                                 type="radio"
                                                 name="deliveryType"
                                                 value="pickup"
                                                 checked={formData.deliveryType === 'pickup'}
                                                 onChange={(e) => handleInputChange('deliveryType', e.target.value)}
-                                                className="w-4 h-4 text-orange-500"
+                                                className="w-4 h-4 text-blue-500"
                                             />
                                             <span className="ml-3 text-gray-800">Pickup</span>
                                         </label>
@@ -224,7 +336,7 @@
                                                 id="name"
                                                 value={formData.name}
                                                 onChange={(e) => handleInputChange('name', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="Enter your name"
                                             />
                                         </div>
@@ -238,7 +350,7 @@
                                                 id="phone"
                                                 value={formData.phone}
                                                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="(123) 456-7890"
                                             />
                                         </div>
@@ -252,7 +364,7 @@
                                                 id="email"
                                                 value={formData.email}
                                                 onChange={(e) => handleInputChange('email', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="your@email.com"
                                             />
                                         </div>
@@ -267,7 +379,7 @@
                                                     value={formData.address}
                                                     onChange={(e) => handleInputChange('address', e.target.value)}
                                                     rows={3}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                     placeholder="Enter your full delivery address"
                                                 />
                                             </div>
@@ -282,43 +394,26 @@
                                                 value={formData.comments}
                                                 onChange={(e) => handleInputChange('comments', e.target.value)}
                                                 rows={3}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="Any special requests or comments?"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
-                                {hasItems && (
-                                    <div className="bg-gray-50 rounded-lg p-4 border-2 border-orange-200">
-                                        <h3 className="font-semibold text-gray-800 mb-2">Order Summary</h3>
-                                        <div className="space-y-1 text-sm">
-                                            {products.map(product => {
-                                                const qty = formData.products[product.id];
-                                                if (qty > 0) {
-                                                    return (
-                                                        <div key={product.id} className="flex justify-between">
-                                                            <span>{product.name} x {qty}</span>
-                                                            <span>${(product.price * qty).toFixed(2)}</span>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            })}
-                                            <div className="border-t border-gray-300 pt-2 mt-2 flex justify-between font-bold text-base">
-                                                <span>Total</span>
-                                                <span className="text-orange-600">${total.toFixed(2)}</span>
-                                            </div>
-                                        </div>
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-5 border-2 border-blue-300">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-xl font-bold text-gray-800">Order Total:</h3>
+                                        <span className="text-3xl font-bold text-blue-600">${total.toFixed(2)}</span>
                                     </div>
-                                )}
+                                </div>
 
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={!hasItems}
-                                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-600 hover:to-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={isSubmitting}
+                                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition shadow-lg text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {hasItems ? 'Place Order' : 'Add items to continue'}
+                                    {isSubmitting ? 'Submitting Order...' : 'Submit Order'}
                                 </button>
                             </div>
                         </div>
