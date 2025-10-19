@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasty Illam - Order Form</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function ShoppingCart({ className }) {
+            return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
+        }
+
+        function Clock({ className }) {
+            return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+        }
+
+        function Phone({ className }) {
+            return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
+        }
+
+        function OrderForm() {
+            const [formData, setFormData] = useState({
+                name: '',
+                phone: '',
+                email: '',
+                address: '',
+                deliveryType: 'delivery',
+                products: {
+                    dosaBatter: 0,
+                    milletDosaBatter: 0,
+                    adaiDosaBatter: 0,
+                    idliBatter: 0,
+                    idliPodi: 0,
+                    chutney: 0
+                },
+                comments: ''
+            });
+
+            const products = [
+                { id: 'dosaBatter', name: 'Fresh Dosa Batter', price: 8 },
+                { id: 'milletDosaBatter', name: 'Millet Dosa Batter', price: 10 },
+                { id: 'adaiDosaBatter', name: 'Adai Dosa Batter', price: 9 },
+                { id: 'idliBatter', name: 'Idli Batter', price: 8 },
+                { id: 'idliPodi', name: 'Idli Podi', price: 6 },
+                { id: 'chutney', name: 'Chutney', price: 5 }
+            ];
+
+            const handleProductChange = (productId, value) => {
+                setFormData(prev => ({
+                    ...prev,
+                    products: {
+                        ...prev.products,
+                        [productId]: Math.max(0, parseInt(value) || 0)
+                    }
+                }));
+            };
+
+            const handleInputChange = (field, value) => {
+                setFormData(prev => ({
+                    ...prev,
+                    [field]: value
+                }));
+            };
+
+            const calculateTotal = () => {
+                return products.reduce((total, product) => {
+                    return total + (formData.products[product.id] * product.price);
+                }, 0);
+            };
+
+            const handleSubmit = () => {
+                if (!formData.name || !formData.phone) {
+                    alert('Please fill in required fields: Name and Phone Number');
+                    return;
+                }
+                if (formData.deliveryType === 'delivery' && !formData.address) {
+                    alert('Please enter your delivery address');
+                    return;
+                }
+                if (!hasItems) {
+                    alert('Please select at least one item');
+                    return;
+                }
+
+                const orderSummary = {
+                    ...formData,
+                    total: calculateTotal(),
+                    orderedItems: products.filter(p => formData.products[p.id] > 0)
+                        .map(p => `${p.name} x ${formData.products[p.id]}`)
+                };
+                
+                // In production, send this to your server/email
+                console.log('Order submitted:', orderSummary);
+                alert('Order submitted successfully!\n\nOrder Details:\n' + 
+                    orderSummary.orderedItems.join('\n') + 
+                    '\n\nTotal: $' + orderSummary.total.toFixed(2) +
+                    '\n\nWe will contact you shortly at ' + formData.phone);
+                
+                // Reset form
+                setFormData({
+                    name: '',
+                    phone: '',
+                    email: '',
+                    address: '',
+                    deliveryType: 'delivery',
+                    products: {
+                        dosaBatter: 0,
+                        milletDosaBatter: 0,
+                        adaiDosaBatter: 0,
+                        idliBatter: 0,
+                        idliPodi: 0,
+                        chutney: 0
+                    },
+                    comments: ''
+                });
+            };
+
+            const total = calculateTotal();
+            const hasItems = Object.values(formData.products).some(qty => qty > 0);
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 py-8 px-4">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                            <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6">
+                                <h1 className="text-3xl font-bold mb-2">Tasty Illam</h1>
+                                <p className="text-orange-100">Dosa Batter - Mountain House</p>
+                            </div>
+
+                            <div className="bg-orange-100 border-l-4 border-orange-500 p-4">
+                                <p className="text-sm text-gray-800 mb-2">
+                                    <strong>Fresh Dosa Batter, Millet Dosa Batter, Adai Dosa Batter, Idli Batter, Idli Podi and Chutney</strong> now available in Mountain House!
+                                </p>
+                                <p className="text-sm text-gray-700 mb-2">Get it delivered to your doorstep for free or choose pickup.</p>
+                                <div className="flex items-start gap-2 text-sm text-gray-700 bg-white rounded p-3 mt-2">
+                                    <Clock className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-semibold mb-1">Order Timing & Delivery Note:</p>
+                                        <p>Orders placed before 1:00 PM today → Delivered tomorrow morning between 10–11 AM</p>
+                                        <p>Orders placed after 1:00 PM today → Delivery time may vary — Kindly check with us</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-gray-700 mt-3">
+                                    <Phone className="w-4 h-4 text-orange-500" />
+                                    <span>Got questions? WhatsApp us: <strong>408 709 9905</strong></span>
+                                </div>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <ShoppingCart className="w-5 h-5" />
+                                        Select Products
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {products.map(product => (
+                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition">
+                                                <div className="flex-1">
+                                                    <label htmlFor={product.id} className="font-medium text-gray-800 cursor-pointer">
+                                                        {product.name}
+                                                    </label>
+                                                    <p className="text-sm text-gray-600">${product.price}.00</p>
+                                                </div>
+                                                <input
+                                                    type="number"
+                                                    id={product.id}
+                                                    min="0"
+                                                    value={formData.products[product.id]}
+                                                    onChange={(e) => handleProductChange(product.id, e.target.value)}
+                                                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Delivery Option</h2>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-orange-50">
+                                            <input
+                                                type="radio"
+                                                name="deliveryType"
+                                                value="delivery"
+                                                checked={formData.deliveryType === 'delivery'}
+                                                onChange={(e) => handleInputChange('deliveryType', e.target.value)}
+                                                className="w-4 h-4 text-orange-500"
+                                            />
+                                            <span className="ml-3 text-gray-800">Delivery (Free)</span>
+                                        </label>
+                                        <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-orange-50">
+                                            <input
+                                                type="radio"
+                                                name="deliveryType"
+                                                value="pickup"
+                                                checked={formData.deliveryType === 'pickup'}
+                                                onChange={(e) => handleInputChange('deliveryType', e.target.value)}
+                                                className="w-4 h-4 text-orange-500"
+                                            />
+                                            <span className="ml-3 text-gray-800">Pickup</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Your Information</h2>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Full Name <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="name"
+                                                value={formData.name}
+                                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                placeholder="Enter your name"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Phone Number <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                id="phone"
+                                                value={formData.phone}
+                                                onChange={(e) => handleInputChange('phone', e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                placeholder="(123) 456-7890"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Email
+                                            </label>
+                                            <input
+                                                type="email"
+                                                id="email"
+                                                value={formData.email}
+                                                onChange={(e) => handleInputChange('email', e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                placeholder="your@email.com"
+                                            />
+                                        </div>
+
+                                        {formData.deliveryType === 'delivery' && (
+                                            <div>
+                                                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Delivery Address <span className="text-red-500">*</span>
+                                                </label>
+                                                <textarea
+                                                    id="address"
+                                                    value={formData.address}
+                                                    onChange={(e) => handleInputChange('address', e.target.value)}
+                                                    rows={3}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                    placeholder="Enter your full delivery address"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label htmlFor="comments" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Special Instructions (Optional)
+                                            </label>
+                                            <textarea
+                                                id="comments"
+                                                value={formData.comments}
+                                                onChange={(e) => handleInputChange('comments', e.target.value)}
+                                                rows={3}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                placeholder="Any special requests or comments?"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {hasItems && (
+                                    <div className="bg-gray-50 rounded-lg p-4 border-2 border-orange-200">
+                                        <h3 className="font-semibold text-gray-800 mb-2">Order Summary</h3>
+                                        <div className="space-y-1 text-sm">
+                                            {products.map(product => {
+                                                const qty = formData.products[product.id];
+                                                if (qty > 0) {
+                                                    return (
+                                                        <div key={product.id} className="flex justify-between">
+                                                            <span>{product.name} x {qty}</span>
+                                                            <span>${(product.price * qty).toFixed(2)}</span>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+                                            <div className="border-t border-gray-300 pt-2 mt-2 flex justify-between font-bold text-base">
+                                                <span>Total</span>
+                                                <span className="text-orange-600">${total.toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={!hasItems}
+                                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-600 hover:to-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {hasItems ? 'Place Order' : 'Add items to continue'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<OrderForm />, document.getElementById('root'));
+    </script>
+</body>
+</html>
