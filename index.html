@@ -54,22 +54,22 @@
             });
 
             const batterProducts = [
-                { id: 'dosaBatter', name: 'Dosa Batter 32oz', price: 7 },
-                { id: 'idliBatter', name: 'Idli Batter 32oz', price: 7 },
-                { id: 'adaiDosaBatter', name: 'Adai Dosa Batter 32oz', price: 9 },
-                { id: 'moongDalDosaBatter', name: 'Moong Dal Dosa Batter/ Pesarattu 32oz', price: 9 },
-                { id: 'ragiMilletDosaBatter', name: 'Ragi Millet Dosa Batter 32oz', price: 10 },
-                { id: 'multiMilletDosaBatter', name: 'Multi Millet Dosa Batter 32oz', price: 10 },
-                { id: 'pearlMilletDosaBatter', name: 'Pearl Millet Dosa Batter 32oz', price: 10 },
-                { id: 'jowarMilletDosaBatter', name: 'Jowar Millet Dosa Batter 32oz', price: 10 },
-                { id: 'uradDalVadaBatter', name: 'Urad Dal Vada Batter 32oz', price: 10 }
+                { id: 'dosaBatter', name: 'Dosa Batter 32oz', price: 7, ingredients: 'Rice, Urad Dal, Fenugreek, Salt' },
+                { id: 'idliBatter', name: 'Idli Batter 32oz', price: 7, ingredients: 'Rice, Urad Dal, Salt' },
+                { id: 'adaiDosaBatter', name: 'Adai Dosa Batter 32oz', price: 9, ingredients: 'Rice, Toor Dal, Moong Dal, Chana Dal, Urad Dal, Red Chilli, Cumin Seeds, Asafoetida, Fennel, Salt' },
+                { id: 'moongDalDosaBatter', name: 'Moong Dal Dosa Batter/ Pesarattu 32oz', price: 9, ingredients: 'Green Gram, Rice, Green Chilli, Cumin, Ginger, Salt' },
+                { id: 'ragiMilletDosaBatter', name: 'Ragi Millet Dosa Batter 32oz', price: 10, ingredients: 'Ragi Millet, Rice, Urad Dal, Fenugreek, Salt' },
+                { id: 'multiMilletDosaBatter', name: 'Multi Millet Dosa Batter 32oz', price: 10, ingredients: 'Kodo, Little, Barnyard, Foxtail, Fenugreek, Rice, Urad Dal, Salt' },
+                { id: 'pearlMilletDosaBatter', name: 'Pearl Millet Dosa Batter 32oz', price: 10, ingredients: 'Pearl Millet, Rice, Urad Dal, Fenugreek, Salt' },
+                { id: 'jowarMilletDosaBatter', name: 'Jowar Millet Dosa Batter 32oz', price: 10, ingredients: 'Jowar Millet, Rice, Urad Dal, Fenugreek, Salt' },
+                { id: 'uradDalVadaBatter', name: 'Urad Dal Vada Batter 32oz', price: 10, ingredients: 'Urad Dal, Salt' }
             ];
 
             const chutneyProducts = [
-                { id: 'idliPodi', name: 'Idli Podi 5oz', price: 5 },
-                { id: 'corianderChutney', name: 'Coriander Chutney 4oz', price: 3 },
-                { id: 'peanutChutney', name: 'Peanut Chutney 4oz', price: 3 },
-                { id: 'coconutChutney', name: 'Coconut Chutney 4oz', price: 3 }
+                { id: 'idliPodi', name: 'Idli Podi 5oz', price: 5, ingredients: 'Urad Dal, Chana Dal, Dry Red Chili, Salt, Asafoetida, Sesame Seeds, Curry Leaves, Garlic' },
+                { id: 'corianderChutney', name: 'Coriander Chutney 4oz', price: 3, ingredients: 'Coriander Leaves, Red Chili, Ginger, Coconut, Urad Dal, Chana Dal, Tamarind, Garlic' },
+                { id: 'peanutChutney', name: 'Peanut Chutney 4oz', price: 3, ingredients: 'Peanuts, Chana Dal, Urad Dal, Garlic, Tamarind, Red Chili, Salt' },
+                { id: 'coconutChutney', name: 'Coconut Chutney 4oz', price: 3, ingredients: 'Coconut, Green Chili, Garlic, Roasted Chana, Salt' }
             ];
 
             const allProducts = [...batterProducts, ...chutneyProducts];
@@ -229,19 +229,22 @@
                                     </h2>
                                     <div className="space-y-3">
                                         {batterProducts.map(product => (
-                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition">
+                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition bg-white">
                                                 <div className="flex-1">
                                                     <label htmlFor={product.id} className="font-medium text-gray-800 cursor-pointer block">
                                                         {product.name}
                                                     </label>
-                                                    <p className="text-sm text-gray-600">${product.price}.00 each</p>
+                                                    <p className="text-xs text-gray-500 mt-1 italic">
+                                                        🌾 ({product.ingredients})
+                                                    </p>
+                                                    <p className="text-sm text-gray-600 mt-1">${product.price}.00 each</p>
                                                     {formData.products[product.id] > 0 && (
                                                         <p className="text-sm font-semibold text-blue-600 mt-1">
                                                             Subtotal: ${(product.price * formData.products[product.id]).toFixed(2)}
                                                         </p>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 ml-4">
                                                     <label htmlFor={product.id} className="text-sm text-gray-600">Qty:</label>
                                                     <select
                                                         id={product.id}
@@ -266,19 +269,22 @@
                                     </h2>
                                     <div className="space-y-3">
                                         {chutneyProducts.map(product => (
-                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition">
+                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition bg-white">
                                                 <div className="flex-1">
                                                     <label htmlFor={product.id} className="font-medium text-gray-800 cursor-pointer block">
                                                         {product.name}
                                                     </label>
-                                                    <p className="text-sm text-gray-600">${product.price}.00 each</p>
+                                                    <p className="text-xs text-gray-500 mt-1 italic">
+                                                        🌿 ({product.ingredients})
+                                                    </p>
+                                                    <p className="text-sm text-gray-600 mt-1">${product.price}.00 each</p>
                                                     {formData.products[product.id] > 0 && (
                                                         <p className="text-sm font-semibold text-blue-600 mt-1">
                                                             Subtotal: ${(product.price * formData.products[product.id]).toFixed(2)}
                                                         </p>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 ml-4">
                                                     <label htmlFor={product.id} className="text-sm text-gray-600">Qty:</label>
                                                     <select
                                                         id={product.id}
@@ -426,4 +432,3 @@
     </script>
 </body>
 </html>
-
