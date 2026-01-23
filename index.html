@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,6 +28,10 @@
             return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
         }
 
+        function FireIcon({ className }) {
+            return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>;
+        }
+
         function OrderForm() {
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [formData, setFormData] = useState({
@@ -46,9 +51,12 @@
                     jowarMilletDosaBatter: 0,
                     uradDalVadaBatter: 0,
                     idliPodi: 0,
-                    corianderChutney: 0,
                     peanutChutney: 0,
-                    coconutChutney: 0
+                    coconutChutney: 0,
+                    sambar: 0,
+                    chickenGravy: 0,
+                    mixVegKuruma: 0,
+                    rasam: 0
                 },
                 comments: ''
             });
@@ -67,12 +75,18 @@
 
             const chutneyProducts = [
                 { id: 'idliPodi', name: 'Idli Podi 5oz', price: 5, ingredients: 'Urad Dal, Chana Dal, Dry Red Chili, Salt, Asafoetida, Sesame Seeds, Curry Leaves, Garlic' },
-                { id: 'corianderChutney', name: 'Coriander Chutney 4oz', price: 3, ingredients: 'Coriander Leaves, Red Chili, Ginger, Coconut, Urad Dal, Chana Dal, Tamarind, Garlic' },
                 { id: 'peanutChutney', name: 'Peanut Chutney 4oz', price: 3, ingredients: 'Peanuts, Chana Dal, Urad Dal, Garlic, Tamarind, Red Chili, Salt' },
                 { id: 'coconutChutney', name: 'Coconut Chutney 4oz', price: 3, ingredients: 'Coconut, Green Chili, Garlic, Roasted Chana, Salt' }
             ];
 
-            const allProducts = [...batterProducts, ...chutneyProducts];
+            const curryProducts = [
+                { id: 'sambar', name: 'Sambar 16oz', price: 10, availability: 'Monday', ingredients: 'Toor Dal, Drumstick, Brinjal and Indian Spices', isVeg: true },
+                { id: 'chickenGravy', name: 'Chicken Gravy 16oz', price: 10, availability: 'Wednesday', ingredients: 'Chicken, Onion, Tomato and Indian Spices', isVeg: false },
+                { id: 'mixVegKuruma', name: 'Mix Veg Kuruma 16oz', price: 10, availability: 'Friday', ingredients: 'Mixed Vegetables, Peas and Indian Spices', isVeg: true },
+                { id: 'rasam', name: 'Rasam 16oz', price: 5, availability: 'Mon, Wed, Fri', ingredients: 'Tomato, Tamarind, Pepper, Cumin, Garlic, Curry Leaves', isVeg: true }
+            ];
+
+            const allProducts = [...batterProducts, ...chutneyProducts, ...curryProducts];
 
             const handleProductChange = (productId, value) => {
                 setFormData(prev => ({
@@ -97,29 +111,66 @@
                 }, 0);
             };
 
+            const hasCurryItems = () => {
+                return curryProducts.some(product => formData.products[product.id] > 0);
+            };
+
+            const hasNonCurryItems = () => {
+                return [...batterProducts, ...chutneyProducts].some(product => formData.products[product.id] > 0);
+            };
+
+            const onlyCurryItems = () => {
+                return hasCurryItems() && !hasNonCurryItems();
+            };
+
+            // Helper to check if any items are selected
+            const hasAnyItems = () => {
+                return Object.values(formData.products).some(qty => qty > 0);
+            };
+
+            // Determine effective delivery type (pickup is forced for curry-only orders)
+            const getEffectiveDeliveryType = () => {
+                if (onlyCurryItems()) {
+                    return 'pickup';
+                }
+                return formData.deliveryType;
+            };
+
             const handleSubmit = async () => {
-                if (!formData.name || !formData.phone) {
-                    alert('Please fill in required fields: Name and Phone Number');
+                // Validation 1: Check required fields (name and phone)
+                if (!formData.name.trim()) {
+                    alert('Please enter your name');
                     return;
                 }
-                if (formData.deliveryType === 'delivery' && !formData.address) {
-                    alert('Please enter your delivery address');
+                if (!formData.phone.trim()) {
+                    alert('Please enter your phone number');
                     return;
                 }
-                if (!hasItems) {
+
+                // Validation 2: Check if at least one item is selected
+                if (!hasAnyItems()) {
                     alert('Please select at least one item');
+                    return;
+                }
+
+                // Validation 3: Get effective delivery type and check address if needed
+                const effectiveDeliveryType = getEffectiveDeliveryType();
+                
+                // Only require address if delivery is selected AND it's not a curry-only order
+                if (effectiveDeliveryType === 'delivery' && !formData.address.trim()) {
+                    alert('Please enter your delivery address');
                     return;
                 }
 
                 setIsSubmitting(true);
 
-                // Prepare order data
+                // Prepare order data with effective delivery type
                 const orderData = {
                     name: formData.name,
                     phone: formData.phone,
                     email: formData.email,
-                    address: formData.address,
-                    deliveryType: formData.deliveryType,
+                    address: effectiveDeliveryType === 'pickup' ? 'Pickup' : formData.address,
+                    deliveryType: effectiveDeliveryType,
                     comments: formData.comments,
                     products: {}
                 };
@@ -132,13 +183,14 @@
                             name: product.name,
                             quantity: qty,
                             price: product.price,
-                            subtotal: qty * product.price
+                            subtotal: qty * product.price,
+                            availability: product.availability || null
                         };
                     }
                 });
 
                 try {
-                    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyt6C-NsoMp1IN2rCmmLl6ct_mmcdpkcFY6ycihtwLldGKwY2Giz1nGQbTVIUpgypzZhQ/exec';
+                    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwaENcgG-Erk5Hi62Jhz7Tt4SqhBAu_rU2hKmYgF-FVw8mJXEGXuCWb5-O2wmiULtfy/exec';
 
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
@@ -175,9 +227,12 @@
                             jowarMilletDosaBatter: 0,
                             uradDalVadaBatter: 0,
                             idliPodi: 0,
-                            corianderChutney: 0,
                             peanutChutney: 0,
-                            coconutChutney: 0
+                            coconutChutney: 0,
+                            sambar: 0,
+                            chickenGravy: 0,
+                            mixVegKuruma: 0,
+                            rasam: 0
                         },
                         comments: ''
                     });
@@ -191,7 +246,18 @@
             };
 
             const total = calculateTotal();
-            const hasItems = Object.values(formData.products).some(qty => qty > 0);
+            const hasItems = hasAnyItems();
+
+            const getAvailabilityBadge = (availability) => {
+                const colors = {
+                    'Monday': 'bg-purple-100 text-purple-700 border-purple-300',
+                    'Wednesday': 'bg-orange-100 text-orange-700 border-orange-300',
+                    'Friday': 'bg-green-100 text-green-700 border-green-300',
+                    'Mon, Wed, Fri': 'bg-blue-100 text-blue-700 border-blue-300',
+                    'All Days': 'bg-blue-100 text-blue-700 border-blue-300'
+                };
+                return colors[availability] || 'bg-gray-100 text-gray-700 border-gray-300';
+            };
 
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 px-4">
@@ -204,7 +270,7 @@
 
                             <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
                                 <p className="text-sm text-gray-800 mb-2">
-                                    <strong>Fresh Dosa Batter, Millet Dosa Batter, Adai Dosa Batter, Idli Batter, Idli Podi and Chutney</strong> now available in Mountain House!
+                                    <strong>Fresh Dosa Batter, Millet Dosa Batter, Adai Dosa Batter, Idli Batter, Idli Podi, Chutney & Freshly Made Curries</strong> now available in Mountain House!
                                 </p>
                                 <p className="text-sm text-gray-700 mb-2">Get it delivered to your doorstep for free or choose pickup.</p>
                                 <div className="flex items-start gap-2 text-sm text-gray-700 bg-white rounded p-3 mt-2 shadow-sm">
@@ -302,30 +368,105 @@
                                     </div>
                                 </div>
 
+                                {/* New Curries Section */}
+                                <div>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                                            <FireIcon className="w-5 h-5 text-orange-500" />
+                                            Curries
+                                        </h2>
+                                        <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full border border-amber-300">
+                                            🏠 Pickup Only • Pre-Order
+                                        </span>
+                                    </div>
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                                        <p className="text-sm text-amber-800">
+                                            <strong>📅 Pre-Order Required:</strong> Curries are freshly prepared on specific days. Please order in advance for pickup.
+                                        </p>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {curryProducts.map(product => (
+                                            <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition bg-white">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <label htmlFor={product.id} className="font-medium text-gray-800 cursor-pointer">
+                                                            {product.name}
+                                                        </label>
+                                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${getAvailabilityBadge(product.availability)}`}>
+                                                            📆 {product.availability}
+                                                        </span>
+                                                        {product.isVeg ? (
+                                                            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 border border-green-300">
+                                                                🌱 Veg
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 border border-red-300">
+                                                                🍗 Non-Veg
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1 italic">
+                                                        🍲 ({product.ingredients})
+                                                    </p>
+                                                    <p className="text-sm text-gray-600 mt-1">${product.price}.00 each</p>
+                                                    {formData.products[product.id] > 0 && (
+                                                        <p className="text-sm font-semibold text-orange-600 mt-1">
+                                                            Subtotal: ${(product.price * formData.products[product.id]).toFixed(2)}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 ml-4">
+                                                    <label htmlFor={product.id} className="text-sm text-gray-600">Qty:</label>
+                                                    <select
+                                                        id={product.id}
+                                                        value={formData.products[product.id]}
+                                                        onChange={(e) => handleProductChange(product.id, e.target.value)}
+                                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                                                    >
+                                                        {[...Array(6)].map((_, i) => (
+                                                            <option key={i} value={i}>{i}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div>
                                     <h2 className="text-xl font-semibold text-gray-800 mb-3">Delivery Option</h2>
+                                    {onlyCurryItems() && (
+                                        <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-3">
+                                            <p className="text-sm text-amber-800 font-medium">
+                                                ⚠️ You have only curry items in your cart. Curries are available for <strong>Pickup Only</strong>.
+                                            </p>
+                                        </div>
+                                    )}
                                     <div className="space-y-2">
-                                        <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50">
+                                        <label className={`flex items-center p-3 border rounded-lg cursor-pointer ${onlyCurryItems() ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-gray-200 hover:bg-blue-50'}`}>
                                             <input
                                                 type="radio"
                                                 name="deliveryType"
                                                 value="delivery"
-                                                checked={formData.deliveryType === 'delivery'}
+                                                checked={formData.deliveryType === 'delivery' && !onlyCurryItems()}
                                                 onChange={(e) => handleInputChange('deliveryType', e.target.value)}
+                                                disabled={onlyCurryItems()}
                                                 className="w-4 h-4 text-blue-500"
                                             />
                                             <span className="ml-3 text-gray-800">Delivery (Free)</span>
+                                            {onlyCurryItems() && <span className="ml-2 text-xs text-amber-600">(Not available - curry items only)</span>}
                                         </label>
                                         <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50">
                                             <input
                                                 type="radio"
                                                 name="deliveryType"
                                                 value="pickup"
-                                                checked={formData.deliveryType === 'pickup'}
+                                                checked={formData.deliveryType === 'pickup' || onlyCurryItems()}
                                                 onChange={(e) => handleInputChange('deliveryType', e.target.value)}
                                                 className="w-4 h-4 text-blue-500"
                                             />
                                             <span className="ml-3 text-gray-800">Pickup</span>
+                                            {onlyCurryItems() && <span className="ml-2 text-xs text-green-600 font-medium">(Required for curry-only orders)</span>}
                                         </label>
                                     </div>
                                 </div>
@@ -375,7 +516,7 @@
                                             />
                                         </div>
 
-                                        {formData.deliveryType === 'delivery' && (
+                                        {getEffectiveDeliveryType() === 'delivery' && (
                                             <div>
                                                 <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
                                                     Delivery Address <span className="text-red-500">*</span>
